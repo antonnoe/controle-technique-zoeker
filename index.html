@@ -200,17 +200,6 @@
         .page-btn.active { background: #800000; color: white; border-color: #800000; }
         .page-info { color: #666; font-size: 0.9rem; padding: 0 10px; }
         
-        .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
-        .example-btn {
-            padding: 8px 14px;
-            background: #f0f0f0;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-        .example-btn:hover { background: #800000; color: white; border-color: #800000; }
-        
         .empty-state {
             background: white;
             border-radius: 12px;
@@ -302,6 +291,7 @@
                     <option value="4 x 4">🚙 4x4 / SUV</option>
                     <option value="Voiture de collection">🚘 Oldtimer</option>
                     <option value="Camionnette">🚐 Bestelbus</option>
+                    <option value="Camping-car (moins de 3,5 tonnes)">🏕️ Camper (&lt;3,5t)</option>
                 </select>
                 <select id="energie">
                     <option value="">Alle brandstoffen</option>
@@ -349,13 +339,6 @@
                 <div class="icon">🚗</div>
                 <h3>Zoek een keuringsstation</h3>
                 <p>Typ een postcode of plaatsnaam, of selecteer een regio</p>
-                <div class="examples">
-                    <button class="example-btn" data-q="75001">Paris (75001)</button>
-                    <button class="example-btn" data-q="69001">Lyon (69001)</button>
-                    <button class="example-btn" data-q="13001">Marseille (13001)</button>
-                    <button class="example-btn" data-q="33000">Bordeaux (33000)</button>
-                    <button class="example-btn" data-q="31000">Toulouse (31000)</button>
-                </div>
             </div>
         </div>
         
@@ -371,12 +354,10 @@
 const API_URL = 'https://data.economie.gouv.fr/api/records/1.0/search/';
 const ROWS_PER_PAGE = 100;
 
-// State
 let currentPage = 0;
 let totalResults = 0;
 let currentView = 'normal';
 
-// DOM Elements
 const searchInput = document.getElementById('search');
 const searchBtn = document.getElementById('searchBtn');
 const regionSelect = document.getElementById('region');
@@ -396,7 +377,8 @@ const icons = {
     'Voiture particulière': '🚗',
     '4 x 4': '🚙',
     'Voiture de collection': '🚘',
-    'Camionnette': '🚐'
+    'Camionnette': '🚐',
+    'Camping-car (moins de 3,5 tonnes)': '🏕️'
 };
 
 const badgeClass = {
@@ -432,7 +414,6 @@ async function doSearch(page = 0) {
             start: page * ROWS_PER_PAGE
         });
         
-        // Build query
         const qParts = [];
         const query = searchInput.value.trim();
         
@@ -568,11 +549,8 @@ function renderPagination() {
     paginationDiv.style.display = 'flex';
     
     let html = '';
-    
-    // Previous
     html += `<button class="page-btn" ${currentPage === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">← Vorige</button>`;
     
-    // Page numbers (show max 5)
     const startPage = Math.max(0, currentPage - 2);
     const endPage = Math.min(totalPages - 1, startPage + 4);
     
@@ -590,7 +568,6 @@ function renderPagination() {
         html += `<button class="page-btn" onclick="goToPage(${totalPages - 1})">${totalPages}</button>`;
     }
     
-    // Next
     html += `<button class="page-btn" ${currentPage >= totalPages - 1 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Volgende →</button>`;
     
     paginationDiv.innerHTML = html;
@@ -612,15 +589,7 @@ function showEmpty() {
             <div class="icon">🚗</div>
             <h3>Zoek een keuringsstation</h3>
             <p>Typ een postcode of plaatsnaam, of selecteer een regio</p>
-            <div class="examples">
-                <button class="example-btn" data-q="75001">Paris (75001)</button>
-                <button class="example-btn" data-q="69001">Lyon (69001)</button>
-                <button class="example-btn" data-q="13001">Marseille (13001)</button>
-                <button class="example-btn" data-q="33000">Bordeaux (33000)</button>
-                <button class="example-btn" data-q="31000">Toulouse (31000)</button>
-            </div>
         </div>`;
-    attachExampleListeners();
 }
 
 function esc(str) {
@@ -628,13 +597,9 @@ function esc(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// Event Listeners
 searchBtn.addEventListener('click', () => doSearch(0));
 searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(0); });
-
-sortSelect.addEventListener('change', () => {
-    if (hasActiveFilters()) doSearch(0);
-});
+sortSelect.addEventListener('change', () => { if (hasActiveFilters()) doSearch(0); });
 
 clearBtn.addEventListener('click', () => {
     searchInput.value = '';
@@ -646,33 +611,17 @@ clearBtn.addEventListener('click', () => {
     showEmpty();
 });
 
-// View toggle
 document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         currentView = btn.dataset.view;
         const list = document.querySelector('.results-list');
-        if (list) {
-            list.classList.toggle('compact', currentView === 'compact');
-        }
+        if (list) list.classList.toggle('compact', currentView === 'compact');
     });
 });
 
-function attachExampleListeners() {
-    document.querySelectorAll('.example-btn').forEach(btn => {
-        btn.onclick = () => {
-            searchInput.value = btn.dataset.q;
-            doSearch(0);
-        };
-    });
-}
-
-// Make goToPage global
 window.goToPage = goToPage;
-
-// Init
-attachExampleListeners();
 </script>
 </body>
 </html>
