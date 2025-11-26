@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoek Keuringscentra - Contrôle Technique Frankrijk</title>
+    <meta name="description" content="Vind APK-keuringsstations in Frankrijk met actuele tarieven.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #800000, #5a0000);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 16px;
+            color: white;
+        }
+        .header h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        .header p { opacity: 0.85; font-size: 0.9rem; }
+        .header .stats { opacity: 0.7; font-size: 0.8rem; margin-top: 6px; }
+        
+        /* Search */
+        .search-box {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        
+        .search-row { display: flex; gap: 10px; margin-bottom: 14px; }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .search-input:focus { outline: none; border-color: #800000; }
+        
+        .search-btn {
+            padding: 12px 24px;
+            background: #800000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .search-btn:hover { background: #5a0000; }
+        
+        .filters { display: flex; flex-wrap: wrap; gap: 10px; }
+        .filters select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            font-size: 0.9rem;
+        }
+        
+        .clear-btn {
+            padding: 8px 14px;
+            background: #eee;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .clear-btn:hover { background: #ddd; }
+        
+        /* Demo Notice */
+        .demo-notice {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .demo-notice .icon { font-size: 1.2rem; }
+        .demo-notice strong { color: #92400e; }
+        .demo-notice p { color: #a16207; font-size: 0.85rem; margin: 2px 0 0; }
+        
+        /* Results Count */
+        .results-info { margin-bottom: 12px; color: #666; font-size: 0.9rem; }
+        .results-info strong { color: #800000; }
+        
+        /* Cards */
+        .results-list { display: flex; flex-direction: column; gap: 14px; }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: #f9f9f9;
+            padding: 14px 18px;
+            border-bottom: 1px solid #eee;
+        }
+        .card-header h2 { font-size: 1.05rem; color: #333; margin-bottom: 4px; }
+        .card-header .address { color: #666; font-size: 0.85rem; }
+        .card-header .region { color: #888; font-size: 0.8rem; margin-top: 2px; }
+        .card-header .contact { margin-top: 6px; font-size: 0.85rem; }
+        .card-header .contact a { color: #800000; text-decoration: none; }
+        
+        .card-body { padding: 14px 18px; }
+        .card-body h3 { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 10px; }
+        
+        /* Table */
+        .tariffs { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .tariffs th { text-align: left; padding: 6px 8px 6px 0; color: #888; font-weight: 500; font-size: 0.8rem; border-bottom: 1px solid #eee; }
+        .tariffs td { padding: 8px 8px 8px 0; border-bottom: 1px solid #f5f5f5; }
+        .tariffs tr:last-child td { border-bottom: none; }
+        .tariffs .price { text-align: right; font-weight: 700; color: #800000; }
+        .tariffs .contre { text-align: right; color: #666; }
+        
+        .vehicule { display: flex; align-items: center; gap: 6px; }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-essence { background: #fef3c7; color: #92400e; }
+        .badge-diesel { background: #e5e7eb; color: #374151; }
+        .badge-gaz { background: #dbeafe; color: #1e40af; }
+        .badge-hybride { background: #ccfbf1; color: #0f766e; }
+        .badge-electrique { background: #dcfce7; color: #166534; }
+        
+        /* Example Buttons */
+        .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+        .example-btn {
+            padding: 8px 14px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .example-btn:hover { background: #800000; color: white; border-color: #800000; }
+        
+        /* Empty State */
+        .empty-state {
+            background: white;
+            border-radius: 12px;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+        .empty-state h3 { margin-bottom: 8px; }
+        .empty-state p { color: #888; max-width: 400px; margin: 0 auto; }
+        
+        /* Footer */
+        .footer { text-align: center; padding: 20px; color: #888; font-size: 0.8rem; }
+        .footer a { color: #800000; text-decoration: none; }
+        
+        @media (max-width: 600px) {
+            .search-row { flex-direction: column; }
+            .filters { flex-direction: column; }
+            .filters select { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🔍 Zoek Keuringscentra (Contrôle Technique)</h1>
+            <p>Vind APK-keuringsstations in Frankrijk met actuele tarieven</p>
+            <div class="stats">Database: <span id="dbCount">131.000+</span> tarieven</div>
+        </header>
+        
+        <div class="search-box">
+            <div class="search-row">
+                <input type="text" id="search" class="search-input" placeholder="Zoek op stad (bijv. Paris, Lyon, Marseille...)">
+                <button class="search-btn" id="searchBtn">Zoeken</button>
+            </div>
+            <div class="filters">
+                <select id="vehicule">
+                    <option value="">Alle voertuigen</option>
+                    <option value="Voiture particulière">🚗 Personenauto</option>
+                    <option value="4 x 4">🚙 4x4 / SUV</option>
+                    <option value="Voiture de collection">🚘 Oldtimer</option>
+                    <option value="Camionnette">🚐 Bestelbus</option>
+                </select>
+                <select id="energie">
+                    <option value="">Alle brandstoffen</option>
+                    <option value="Essence">Benzine</option>
+                    <option value="Diesel">Diesel</option>
+                    <option value="Hybride">Hybride</option>
+                    <option value="Electrique">Elektrisch</option>
+                </select>
+                <select id="maxPrice">
+                    <option value="">Geen max. prijs</option>
+                    <option value="70">Tot €70</option>
+                    <option value="80">Tot €80</option>
+                    <option value="90">Tot €90</option>
+                </select>
+                <button class="clear-btn" id="clearBtn">✕ Wissen</button>
+            </div>
+        </div>
+        
+        <div id="demoNotice" class="demo-notice" style="display:none;">
+            <span class="icon">ℹ️</span>
+            <div>
+                <strong>Demo-modus</strong>
+                <p>API niet bereikbaar in preview. Op Vercel krijg je live data.</p>
+            </div>
+        </div>
+        
+        <div class="results-info" id="resultsInfo"></div>
+        
+        <div id="results">
+            <div class="empty-state">
+                <div class="icon">🚗</div>
+                <h3>Zoek een keuringsstation</h3>
+                <p>Typ een plaatsnaam of klik op een voorbeeld hieronder</p>
+                <div class="examples">
+                    <button class="example-btn" data-q="Paris">Paris</button>
+                    <button class="example-btn" data-q="Lyon">Lyon</button>
+                    <button class="example-btn" data-q="Marseille">Marseille</button>
+                    <button class="example-btn" data-q="Bordeaux">Bordeaux</button>
+                    <button class="example-btn" data-q="Toulouse">Toulouse</button>
+                    <button class="example-btn" data-q="Nantes">Nantes</button>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="footer">
+            <p>Data: <a href="https://data.economie.gouv.fr/explore/dataset/controle_technique" target="_blank">data.gouv.fr</a> • 
+            <a href="https://www.infofrankrijk.com" target="_blank">InfoFrankrijk.com</a></p>
+        </footer>
+    </div>
+
+<script>
+// ============ DEMO DATA ============
+const DEMO_DATA = [
+    // PARIS
+    {siret:"32922456200068",name:"SECURITEST PARIS NATION",address:"25 BOULEVARD DE CHARONNE",postal:"75011",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 73 15 15",url:null,vehicule:"Voiture particulière",energie:"Essence",prix:79,cv_min:15,cv_max:20},
+    {siret:"32922456200068",name:"SECURITEST PARIS NATION",address:"25 BOULEVARD DE CHARONNE",postal:"75011",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 73 15 15",url:null,vehicule:"Voiture particulière",energie:"Diesel",prix:79,cv_min:15,cv_max:20},
+    {siret:"32922456200068",name:"SECURITEST PARIS NATION",address:"25 BOULEVARD DE CHARONNE",postal:"75011",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 73 15 15",url:null,vehicule:"Voiture particulière",energie:"Hybride",prix:89,cv_min:15,cv_max:20},
+    {siret:"32922456200068",name:"SECURITEST PARIS NATION",address:"25 BOULEVARD DE CHARONNE",postal:"75011",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 73 15 15",url:null,vehicule:"4 x 4",energie:"Diesel",prix:85,cv_min:15,cv_max:20},
+    {siret:"44756745600029",name:"AUTOVISION PARIS BASTILLE",address:"12 RUE DE LYON",postal:"75012",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 42 42 42",url:"www.autovision.fr",vehicule:"Voiture particulière",energie:"Essence",prix:75,cv_min:18,cv_max:22},
+    {siret:"44756745600029",name:"AUTOVISION PARIS BASTILLE",address:"12 RUE DE LYON",postal:"75012",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 42 42 42",url:"www.autovision.fr",vehicule:"Voiture particulière",energie:"Diesel",prix:75,cv_min:18,cv_max:22},
+    {siret:"44756745600029",name:"AUTOVISION PARIS BASTILLE",address:"12 RUE DE LYON",postal:"75012",city:"Paris",dept:"PARIS",region:"Île-de-France",tel:"01 43 42 42 42",url:"www.autovision.fr",vehicule:"Camionnette",energie:"Diesel",prix:82,cv_min:18,cv_max:25},
+    // LYON
+    {siret:"51234567800015",name:"DEKRA LYON PART-DIEU",address:"45 RUE GARIBALDI",postal:"69003",city:"Lyon",dept:"RHÔNE",region:"Auvergne-Rhône-Alpes",tel:"04 72 33 11 22",url:"www.dekra.fr",vehicule:"Voiture particulière",energie:"Essence",prix:72,cv_min:15,cv_max:20},
+    {siret:"51234567800015",name:"DEKRA LYON PART-DIEU",address:"45 RUE GARIBALDI",postal:"69003",city:"Lyon",dept:"RHÔNE",region:"Auvergne-Rhône-Alpes",tel:"04 72 33 11 22",url:"www.dekra.fr",vehicule:"Voiture particulière",energie:"Diesel",prix:72,cv_min:15,cv_max:20},
+    {siret:"51234567800015",name:"DEKRA LYON PART-DIEU",address:"45 RUE GARIBALDI",postal:"69003",city:"Lyon",dept:"RHÔNE",region:"Auvergne-Rhône-Alpes",tel:"04 72 33 11 22",url:"www.dekra.fr",vehicule:"Voiture particulière",energie:"Electrique",prix:85,cv_min:15,cv_max:20},
+    {siret:"51234567800015",name:"DEKRA LYON PART-DIEU",address:"45 RUE GARIBALDI",postal:"69003",city:"Lyon",dept:"RHÔNE",region:"Auvergne-Rhône-Alpes",tel:"04 72 33 11 22",url:"www.dekra.fr",vehicule:"4 x 4",energie:"Essence",prix:78,cv_min:15,cv_max:20},
+    // MARSEILLE
+    {siret:"62345678900023",name:"CONTROLE AUTO MARSEILLE PRADO",address:"156 AVENUE DU PRADO",postal:"13008",city:"Marseille",dept:"BOUCHES-DU-RHÔNE",region:"Provence-Alpes-Côte d'Azur",tel:"04 91 22 55 66",url:null,vehicule:"Voiture particulière",energie:"Essence",prix:69,cv_min:12,cv_max:18},
+    {siret:"62345678900023",name:"CONTROLE AUTO MARSEILLE PRADO",address:"156 AVENUE DU PRADO",postal:"13008",city:"Marseille",dept:"BOUCHES-DU-RHÔNE",region:"Provence-Alpes-Côte d'Azur",tel:"04 91 22 55 66",url:null,vehicule:"Voiture particulière",energie:"Diesel",prix:69,cv_min:12,cv_max:18},
+    {siret:"62345678900023",name:"CONTROLE AUTO MARSEILLE PRADO",address:"156 AVENUE DU PRADO",postal:"13008",city:"Marseille",dept:"BOUCHES-DU-RHÔNE",region:"Provence-Alpes-Côte d'Azur",tel:"04 91 22 55 66",url:null,vehicule:"Voiture de collection",energie:"Essence",prix:65,cv_min:12,cv_max:18},
+    // BORDEAUX
+    {siret:"73456789000031",name:"AUTO SECURITE BORDEAUX",address:"88 COURS DE LA MARNE",postal:"33000",city:"Bordeaux",dept:"GIRONDE",region:"Nouvelle-Aquitaine",tel:"05 56 44 88 99",url:"www.auto-securite.com",vehicule:"Voiture particulière",energie:"Essence",prix:68,cv_min:14,cv_max:19},
+    {siret:"73456789000031",name:"AUTO SECURITE BORDEAUX",address:"88 COURS DE LA MARNE",postal:"33000",city:"Bordeaux",dept:"GIRONDE",region:"Nouvelle-Aquitaine",tel:"05 56 44 88 99",url:"www.auto-securite.com",vehicule:"Voiture particulière",energie:"Diesel",prix:68,cv_min:14,cv_max:19},
+    {siret:"73456789000031",name:"AUTO SECURITE BORDEAUX",address:"88 COURS DE LA MARNE",postal:"33000",city:"Bordeaux",dept:"GIRONDE",region:"Nouvelle-Aquitaine",tel:"05 56 44 88 99",url:"www.auto-securite.com",vehicule:"Camionnette",energie:"Diesel",prix:75,cv_min:14,cv_max:22},
+    // TOULOUSE
+    {siret:"84567890100042",name:"NORISKO AUTO TOULOUSE",address:"22 ALLÉE JEAN JAURÈS",postal:"31000",city:"Toulouse",dept:"HAUTE-GARONNE",region:"Occitanie",tel:"05 61 77 88 44",url:null,vehicule:"Voiture particulière",energie:"Essence",prix:65,cv_min:12,cv_max:17},
+    {siret:"84567890100042",name:"NORISKO AUTO TOULOUSE",address:"22 ALLÉE JEAN JAURÈS",postal:"31000",city:"Toulouse",dept:"HAUTE-GARONNE",region:"Occitanie",tel:"05 61 77 88 44",url:null,vehicule:"Voiture particulière",energie:"Diesel",prix:65,cv_min:12,cv_max:17},
+    {siret:"84567890100042",name:"NORISKO AUTO TOULOUSE",address:"22 ALLÉE JEAN JAURÈS",postal:"31000",city:"Toulouse",dept:"HAUTE-GARONNE",region:"Occitanie",tel:"05 61 77 88 44",url:null,vehicule:"Voiture particulière",energie:"Hybride",prix:75,cv_min:12,cv_max:17},
+    // NANTES
+    {siret:"95678901200053",name:"VIVAUTO NANTES",address:"5 RUE DE LA BEAUJOIRE",postal:"44300",city:"Nantes",dept:"LOIRE-ATLANTIQUE",region:"Pays de la Loire",tel:"02 40 55 66 77",url:"www.vivauto.fr",vehicule:"Voiture particulière",energie:"Essence",prix:67,cv_min:13,cv_max:18},
+    {siret:"95678901200053",name:"VIVAUTO NANTES",address:"5 RUE DE LA BEAUJOIRE",postal:"44300",city:"Nantes",dept:"LOIRE-ATLANTIQUE",region:"Pays de la Loire",tel:"02 40 55 66 77",url:"www.vivauto.fr",vehicule:"Voiture particulière",energie:"Diesel",prix:67,cv_min:13,cv_max:18},
+    {siret:"95678901200053",name:"VIVAUTO NANTES",address:"5 RUE DE LA BEAUJOIRE",postal:"44300",city:"Nantes",dept:"LOIRE-ATLANTIQUE",region:"Pays de la Loire",tel:"02 40 55 66 77",url:"www.vivauto.fr",vehicule:"4 x 4",energie:"Diesel",prix:74,cv_min:13,cv_max:20}
+];
+
+// ============ API CONFIG ============
+const API_URL = 'https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/controle_technique/records';
+
+// ============ STATE ============
+let isDemo = false;
+
+// ============ DOM ============
+const searchInput = document.getElementById('search');
+const searchBtn = document.getElementById('searchBtn');
+const vehiculeSelect = document.getElementById('vehicule');
+const energieSelect = document.getElementById('energie');
+const maxPriceSelect = document.getElementById('maxPrice');
+const clearBtn = document.getElementById('clearBtn');
+const resultsDiv = document.getElementById('results');
+const resultsInfo = document.getElementById('resultsInfo');
+const demoNotice = document.getElementById('demoNotice');
+const dbCount = document.getElementById('dbCount');
+
+// ============ ICONS ============
+const icons = {
+    'Voiture particulière': '🚗',
+    '4 x 4': '🚙',
+    'Voiture de collection': '🚘',
+    'Camionnette': '🚐'
+};
+
+const badgeClass = {
+    'Essence': 'badge-essence',
+    'Diesel': 'badge-diesel',
+    'Hybride': 'badge-hybride',
+    'Electrique': 'badge-electrique'
+};
+
+// ============ SEARCH ============
+async function doSearch() {
+    const query = searchInput.value.trim();
+    const vehicule = vehiculeSelect.value;
+    const energie = energieSelect.value;
+    const maxPrice = maxPriceSelect.value;
+    
+    if (!query && !vehicule && !energie && !maxPrice) {
+        showEmpty();
+        return;
+    }
+    
+    // Try API first
+    try {
+        const data = await fetchAPI(query, vehicule, energie, maxPrice);
+        if (data && data.results && data.results.length > 0) {
+            isDemo = false;
+            demoNotice.style.display = 'none';
+            dbCount.textContent = data.total_count.toLocaleString('nl-NL');
+            renderResults(transformAPIData(data.results), data.total_count);
+            return;
+        }
+    } catch (e) {
+        console.log('API failed, using demo data:', e.message);
+    }
+    
+    // Fallback to demo
+    isDemo = true;
+    demoNotice.style.display = 'flex';
+    dbCount.textContent = '131.000+ (demo)';
+    
+    const filtered = filterDemoData(query, vehicule, energie, maxPrice);
+    renderResults(filtered, filtered.length);
+}
+
+// ============ API FETCH ============
+async function fetchAPI(query, vehicule, energie, maxPrice) {
+    const params = new URLSearchParams({ limit: '100' });
+    const where = [];
+    
+    if (query) {
+        if (/^\d{5}$/.test(query)) {
+            where.push(`cct_code_postal="${query}"`);
+        } else {
+            where.push(`search(cct_commune,"${query}")`);
+        }
+    }
+    if (vehicule) where.push(`cat_vehicule_libelle="${vehicule}"`);
+    if (energie) where.push(`cat_energie_libelle="${energie}"`);
+    if (maxPrice) where.push(`prix_visite<=${maxPrice}`);
+    
+    if (where.length) params.append('where', where.join(' AND '));
+    
+    const res = await fetch(`${API_URL}?${params}`);
+    if (!res.ok) throw new Error('API error');
+    return res.json();
+}
+
+function transformAPIData(results) {
+    return results.map(r => ({
+        siret: r.cct_siret,
+        name: r.cct_denomination,
+        address: r.cct_adresse,
+        postal: r.cct_code_postal,
+        city: r.cct_commune,
+        dept: r.nom_departement,
+        region: r.nom_region,
+        tel: r.cct_tel,
+        url: r.cct_url,
+        vehicule: r.cat_vehicule_libelle,
+        energie: r.cat_energie_libelle,
+        prix: r.prix_visite,
+        cv_min: r.prix_contre_visite_mini,
+        cv_max: r.prix_contre_visite_maxi
+    }));
+}
+
+// ============ DEMO FILTER ============
+function filterDemoData(query, vehicule, energie, maxPrice) {
+    return DEMO_DATA.filter(item => {
+        const q = query.toLowerCase();
+        const matchQ = !query || 
+            item.city.toLowerCase().includes(q) || 
+            item.name.toLowerCase().includes(q) ||
+            item.postal.includes(query);
+        const matchV = !vehicule || item.vehicule === vehicule;
+        const matchE = !energie || item.energie === energie;
+        const matchP = !maxPrice || item.prix <= parseInt(maxPrice);
+        return matchQ && matchV && matchE && matchP;
+    });
+}
+
+// ============ GROUP BY CENTER ============
+function groupByCenter(data) {
+    const groups = {};
+    data.forEach(item => {
+        if (!groups[item.siret]) {
+            groups[item.siret] = { info: item, tarifs: [] };
+        }
+        groups[item.siret].tarifs.push(item);
+    });
+    return Object.values(groups);
+}
+
+// ============ RENDER ============
+function renderResults(data, total) {
+    if (!data.length) {
+        resultsInfo.innerHTML = '';
+        resultsDiv.innerHTML = `
+            <div class="empty-state">
+                <div class="icon">🔍</div>
+                <h3>Geen resultaten</h3>
+                <p>Probeer een andere zoekterm${isDemo ? '. Demo bevat alleen: Paris, Lyon, Marseille, Bordeaux, Toulouse, Nantes.' : '.'}</p>
+            </div>`;
+        return;
+    }
+    
+    const grouped = groupByCenter(data);
+    resultsInfo.innerHTML = `<strong>${total}</strong> tarieven bij <strong>${grouped.length}</strong> centrum(a)`;
+    
+    resultsDiv.innerHTML = '<div class="results-list">' + grouped.map(g => renderCard(g)).join('') + '</div>';
+}
+
+function renderCard(group) {
+    const i = group.info;
+    const contact = [];
+    if (i.tel) contact.push(`<a href="tel:${i.tel.replace(/\s/g,'')}">${i.tel}</a>`);
+    if (i.url) contact.push(`<a href="${i.url.startsWith('http')?i.url:'https://'+i.url}" target="_blank">Website</a>`);
+    
+    return `
+    <article class="card">
+        <div class="card-header">
+            <h2>${esc(i.name)}</h2>
+            <div class="address">📍 ${esc(i.address)}, ${i.postal} ${esc(i.city)}</div>
+            <div class="region">${esc(i.dept)} • ${esc(i.region)}</div>
+            ${contact.length ? `<div class="contact">${contact.join(' • ')}</div>` : ''}
+        </div>
+        <div class="card-body">
+            <h3>Tarieven</h3>
+            <table class="tariffs">
+                <thead><tr><th>Voertuig</th><th>Brandstof</th><th style="text-align:right">Keuring</th><th style="text-align:right">Herkeuring</th></tr></thead>
+                <tbody>
+                    ${group.tarifs.map(t => `
+                        <tr>
+                            <td><span class="vehicule">${icons[t.vehicule]||'🚗'} ${esc(t.vehicule)}</span></td>
+                            <td><span class="badge ${badgeClass[t.energie]||''}">${esc(t.energie)}</span></td>
+                            <td class="price">€${t.prix}</td>
+                            <td class="contre">€${t.cv_min}-${t.cv_max}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    </article>`;
+}
+
+function showEmpty() {
+    resultsInfo.innerHTML = '';
+    demoNotice.style.display = 'none';
+    resultsDiv.innerHTML = `
+        <div class="empty-state">
+            <div class="icon">🚗</div>
+            <h3>Zoek een keuringsstation</h3>
+            <p>Typ een plaatsnaam of klik op een voorbeeld hieronder</p>
+            <div class="examples">
+                <button class="example-btn" data-q="Paris">Paris</button>
+                <button class="example-btn" data-q="Lyon">Lyon</button>
+                <button class="example-btn" data-q="Marseille">Marseille</button>
+                <button class="example-btn" data-q="Bordeaux">Bordeaux</button>
+                <button class="example-btn" data-q="Toulouse">Toulouse</button>
+                <button class="example-btn" data-q="Nantes">Nantes</button>
+            </div>
+        </div>`;
+    attachExampleListeners();
+}
+
+function esc(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============ EVENTS ============
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
+clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    vehiculeSelect.value = '';
+    energieSelect.value = '';
+    maxPriceSelect.value = '';
+    dbCount.textContent = '131.000+';
+    showEmpty();
+});
+
+function attachExampleListeners() {
+    document.querySelectorAll('.example-btn').forEach(btn => {
+        btn.onclick = () => {
+            searchInput.value = btn.dataset.q;
+            doSearch();
+        };
+    });
+}
+
+// ============ INIT ============
+attachExampleListeners();
+</script>
+</body>
+</html>
