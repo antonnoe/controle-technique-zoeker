@@ -61,13 +61,24 @@
         .search-btn:hover { background: #5a0000; }
         .search-btn:disabled { background: #ccc; cursor: wait; }
         
-        .filters { display: flex; flex-wrap: wrap; gap: 10px; }
+        .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
         .filters select {
             padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
             background: white;
             font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .filter-row-2 {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            align-items: center;
         }
         
         .clear-btn {
@@ -80,10 +91,50 @@
         }
         .clear-btn:hover { background: #ddd; }
         
-        .results-info { margin-bottom: 12px; color: #666; font-size: 0.9rem; }
+        .sort-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        .sort-select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            background: white;
+        }
+        
+        .results-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .results-info { color: #666; font-size: 0.9rem; }
         .results-info strong { color: #800000; }
         
+        .view-toggle { display: flex; gap: 4px; }
+        .view-btn {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .view-btn:first-child { border-radius: 6px 0 0 6px; }
+        .view-btn:last-child { border-radius: 0 6px 6px 0; }
+        .view-btn.active { background: #800000; color: white; border-color: #800000; }
+        
         .results-list { display: flex; flex-direction: column; gap: 14px; }
+        .results-list.compact .card { font-size: 0.85rem; }
+        .results-list.compact .card-header { padding: 10px 14px; }
+        .results-list.compact .card-header h2 { font-size: 0.95rem; }
+        .results-list.compact .card-body { padding: 10px 14px; }
+        .results-list.compact .tariffs td { padding: 4px 6px 4px 0; }
         
         .card {
             background: white;
@@ -127,6 +178,27 @@
         .badge-gaz { background: #dbeafe; color: #1e40af; }
         .badge-hybride { background: #ccfbf1; color: #0f766e; }
         .badge-electrique { background: #dcfce7; color: #166534; }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .page-btn {
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .page-btn:hover:not(:disabled) { border-color: #800000; color: #800000; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .page-btn.active { background: #800000; color: white; border-color: #800000; }
+        .page-info { color: #666; font-size: 0.9rem; padding: 0 10px; }
         
         .examples { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
         .example-btn {
@@ -182,8 +254,10 @@
         
         @media (max-width: 600px) {
             .search-row { flex-direction: column; }
-            .filters { flex-direction: column; }
-            .filters select { width: 100%; }
+            .filters { grid-template-columns: 1fr 1fr; }
+            .filter-row-2 { flex-direction: column; align-items: stretch; }
+            .sort-label { margin-left: 0; }
+            .results-bar { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
@@ -201,6 +275,27 @@
                 <button class="search-btn" id="searchBtn">Zoeken</button>
             </div>
             <div class="filters">
+                <select id="region">
+                    <option value="">Alle regio's</option>
+                    <option value="Auvergne-Rhône-Alpes">Auvergne-Rhône-Alpes</option>
+                    <option value="Bourgogne-Franche-Comté">Bourgogne-Franche-Comté</option>
+                    <option value="Bretagne">Bretagne</option>
+                    <option value="Centre-Val de Loire">Centre-Val de Loire</option>
+                    <option value="Corse">Corse</option>
+                    <option value="Grand Est">Grand Est</option>
+                    <option value="Hauts-de-France">Hauts-de-France</option>
+                    <option value="Île-de-France">Île-de-France</option>
+                    <option value="Normandie">Normandie</option>
+                    <option value="Nouvelle-Aquitaine">Nouvelle-Aquitaine</option>
+                    <option value="Occitanie">Occitanie</option>
+                    <option value="Pays de la Loire">Pays de la Loire</option>
+                    <option value="Provence-Alpes-Côte d'Azur">Provence-Alpes-Côte d'Azur</option>
+                    <option value="Guadeloupe">Guadeloupe</option>
+                    <option value="Guyane">Guyane</option>
+                    <option value="La Réunion">La Réunion</option>
+                    <option value="Martinique">Martinique</option>
+                    <option value="Mayotte">Mayotte</option>
+                </select>
                 <select id="vehicule">
                     <option value="">Alle voertuigen</option>
                     <option value="Voiture particulière">🚗 Personenauto</option>
@@ -212,27 +307,48 @@
                     <option value="">Alle brandstoffen</option>
                     <option value="Essence">Benzine</option>
                     <option value="Diesel">Diesel</option>
+                    <option value="Gaz">Gas (GPL/GNV)</option>
                     <option value="Hybride">Hybride</option>
                     <option value="Electrique">Elektrisch</option>
                 </select>
                 <select id="maxPrice">
                     <option value="">Geen max. prijs</option>
+                    <option value="50">Tot €50</option>
                     <option value="60">Tot €60</option>
                     <option value="70">Tot €70</option>
                     <option value="80">Tot €80</option>
                     <option value="90">Tot €90</option>
+                    <option value="100">Tot €100</option>
                 </select>
-                <button class="clear-btn" id="clearBtn">✕ Wissen</button>
+            </div>
+            <div class="filter-row-2">
+                <button class="clear-btn" id="clearBtn">✕ Wis filters</button>
+                <span class="sort-label">Sorteren:</span>
+                <select class="sort-select" id="sortSelect">
+                    <option value="">Standaard</option>
+                    <option value="prix_visite">Prijs (laag → hoog)</option>
+                    <option value="-prix_visite">Prijs (hoog → laag)</option>
+                    <option value="cct_denomination">Naam (A → Z)</option>
+                    <option value="cct_code_postal">Postcode</option>
+                </select>
             </div>
         </div>
         
         <div id="error" class="error-msg" style="display:none;"></div>
-        <div class="results-info" id="resultsInfo"></div>
+        
+        <div class="results-bar" id="resultsBar" style="display:none;">
+            <div class="results-info" id="resultsInfo"></div>
+            <div class="view-toggle">
+                <button class="view-btn active" data-view="normal" title="Normale weergave">☰ Normaal</button>
+                <button class="view-btn" data-view="compact" title="Compacte weergave">▤ Compact</button>
+            </div>
+        </div>
+        
         <div id="results">
             <div class="empty-state">
                 <div class="icon">🚗</div>
                 <h3>Zoek een keuringsstation</h3>
-                <p>Typ een postcode of plaatsnaam om keuringsstations te vinden</p>
+                <p>Typ een postcode of plaatsnaam, of selecteer een regio</p>
                 <div class="examples">
                     <button class="example-btn" data-q="75001">Paris (75001)</button>
                     <button class="example-btn" data-q="69001">Lyon (69001)</button>
@@ -243,6 +359,8 @@
             </div>
         </div>
         
+        <div class="pagination" id="pagination" style="display:none;"></div>
+        
         <footer class="footer">
             <p>Data: <a href="https://data.economie.gouv.fr/explore/dataset/prix-controle-technique/" target="_blank">data.gouv.fr</a> • 
             <a href="https://www.infofrankrijk.com" target="_blank">InfoFrankrijk.com</a></p>
@@ -250,19 +368,29 @@
     </div>
 
 <script>
-// Correcte API URL (v1 endpoint)
 const API_URL = 'https://data.economie.gouv.fr/api/records/1.0/search/';
+const ROWS_PER_PAGE = 100;
 
+// State
+let currentPage = 0;
+let totalResults = 0;
+let currentView = 'normal';
+
+// DOM Elements
 const searchInput = document.getElementById('search');
 const searchBtn = document.getElementById('searchBtn');
+const regionSelect = document.getElementById('region');
 const vehiculeSelect = document.getElementById('vehicule');
 const energieSelect = document.getElementById('energie');
 const maxPriceSelect = document.getElementById('maxPrice');
+const sortSelect = document.getElementById('sortSelect');
 const clearBtn = document.getElementById('clearBtn');
 const resultsDiv = document.getElementById('results');
 const resultsInfo = document.getElementById('resultsInfo');
+const resultsBar = document.getElementById('resultsBar');
 const errorDiv = document.getElementById('error');
 const dbCount = document.getElementById('dbCount');
+const paginationDiv = document.getElementById('pagination');
 
 const icons = {
     'Voiture particulière': '🚗',
@@ -279,29 +407,35 @@ const badgeClass = {
     'Electrique': 'badge-electrique'
 };
 
-async function doSearch() {
-    const query = searchInput.value.trim();
-    const vehicule = vehiculeSelect.value;
-    const energie = energieSelect.value;
-    const maxPrice = maxPriceSelect.value;
-    
-    if (!query && !vehicule && !energie && !maxPrice) {
+function hasActiveFilters() {
+    return searchInput.value.trim() || regionSelect.value || vehiculeSelect.value || 
+           energieSelect.value || maxPriceSelect.value;
+}
+
+async function doSearch(page = 0) {
+    if (!hasActiveFilters()) {
         showEmpty();
         return;
     }
     
+    currentPage = page;
     errorDiv.style.display = 'none';
     resultsDiv.innerHTML = '<div class="loading">Zoeken...</div>';
+    resultsBar.style.display = 'none';
+    paginationDiv.style.display = 'none';
     searchBtn.disabled = true;
     
     try {
         const params = new URLSearchParams({
             dataset: 'prix-controle-technique',
-            rows: 100
+            rows: ROWS_PER_PAGE,
+            start: page * ROWS_PER_PAGE
         });
         
-        // Build query string
+        // Build query
         const qParts = [];
+        const query = searchInput.value.trim();
+        
         if (query) {
             if (/^\d{5}$/.test(query)) {
                 qParts.push(`cct_code_postal:${query}`);
@@ -311,19 +445,21 @@ async function doSearch() {
                 qParts.push(`cct_commune:${query}`);
             }
         }
-        if (vehicule) qParts.push(`cat_vehicule_libelle:"${vehicule}"`);
-        if (energie) qParts.push(`cat_energie_libelle:"${energie}"`);
-        if (maxPrice) qParts.push(`prix_visite<=${maxPrice}`);
+        
+        if (regionSelect.value) qParts.push(`nom_region:"${regionSelect.value}"`);
+        if (vehiculeSelect.value) qParts.push(`cat_vehicule_libelle:"${vehiculeSelect.value}"`);
+        if (energieSelect.value) qParts.push(`cat_energie_libelle:"${energieSelect.value}"`);
+        if (maxPriceSelect.value) qParts.push(`prix_visite<=${maxPriceSelect.value}`);
         
         if (qParts.length) params.append('q', qParts.join(' AND '));
+        if (sortSelect.value) params.append('sort', sortSelect.value);
         
         const response = await fetch(`${API_URL}?${params}`);
-        
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
-        
-        dbCount.textContent = (data.nhits || 0).toLocaleString('nl-NL');
+        totalResults = data.nhits || 0;
+        dbCount.textContent = totalResults.toLocaleString('nl-NL');
         
         if (data.records && data.records.length > 0) {
             const transformed = data.records.map(r => ({
@@ -342,22 +478,24 @@ async function doSearch() {
                 cv_min: r.fields.prix_contre_visite_mini,
                 cv_max: r.fields.prix_contre_visite_maxi
             }));
-            renderResults(transformed, data.nhits);
+            renderResults(transformed);
+            renderPagination();
         } else {
             resultsInfo.innerHTML = '';
+            resultsBar.style.display = 'none';
             resultsDiv.innerHTML = `
                 <div class="empty-state">
                     <div class="icon">🔍</div>
                     <h3>Geen resultaten</h3>
-                    <p>Probeer een andere postcode of zoekterm.</p>
+                    <p>Probeer een andere zoekterm of pas de filters aan.</p>
                 </div>`;
         }
     } catch (e) {
         console.error('API Error:', e);
-        errorDiv.textContent = `Fout bij ophalen data: ${e.message}. Probeer het opnieuw.`;
+        errorDiv.textContent = `Fout bij ophalen data: ${e.message}`;
         errorDiv.style.display = 'block';
         resultsDiv.innerHTML = '';
-        resultsInfo.innerHTML = '';
+        resultsBar.style.display = 'none';
     } finally {
         searchBtn.disabled = false;
     }
@@ -375,10 +513,15 @@ function groupByCenter(data) {
     return Object.values(groups);
 }
 
-function renderResults(data, total) {
+function renderResults(data) {
     const grouped = groupByCenter(data);
-    resultsInfo.innerHTML = `<strong>${total.toLocaleString('nl-NL')}</strong> tarieven bij <strong>${grouped.length}</strong> centrum(a)`;
-    resultsDiv.innerHTML = '<div class="results-list">' + grouped.map(g => renderCard(g)).join('') + '</div>';
+    const start = currentPage * ROWS_PER_PAGE + 1;
+    const end = Math.min(start + data.length - 1, totalResults);
+    
+    resultsInfo.innerHTML = `<strong>${start}-${end}</strong> van <strong>${totalResults.toLocaleString('nl-NL')}</strong> tarieven (${grouped.length} centra)`;
+    resultsBar.style.display = 'flex';
+    
+    resultsDiv.innerHTML = `<div class="results-list ${currentView === 'compact' ? 'compact' : ''}">${grouped.map(g => renderCard(g)).join('')}</div>`;
 }
 
 function renderCard(group) {
@@ -414,14 +557,61 @@ function renderCard(group) {
     </article>`;
 }
 
+function renderPagination() {
+    const totalPages = Math.ceil(totalResults / ROWS_PER_PAGE);
+    
+    if (totalPages <= 1) {
+        paginationDiv.style.display = 'none';
+        return;
+    }
+    
+    paginationDiv.style.display = 'flex';
+    
+    let html = '';
+    
+    // Previous
+    html += `<button class="page-btn" ${currentPage === 0 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})">← Vorige</button>`;
+    
+    // Page numbers (show max 5)
+    const startPage = Math.max(0, currentPage - 2);
+    const endPage = Math.min(totalPages - 1, startPage + 4);
+    
+    if (startPage > 0) {
+        html += `<button class="page-btn" onclick="goToPage(0)">1</button>`;
+        if (startPage > 1) html += `<span class="page-info">...</span>`;
+    }
+    
+    for (let p = startPage; p <= endPage; p++) {
+        html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goToPage(${p})">${p + 1}</button>`;
+    }
+    
+    if (endPage < totalPages - 1) {
+        if (endPage < totalPages - 2) html += `<span class="page-info">...</span>`;
+        html += `<button class="page-btn" onclick="goToPage(${totalPages - 1})">${totalPages}</button>`;
+    }
+    
+    // Next
+    html += `<button class="page-btn" ${currentPage >= totalPages - 1 ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})">Volgende →</button>`;
+    
+    paginationDiv.innerHTML = html;
+}
+
+function goToPage(page) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    doSearch(page);
+}
+
 function showEmpty() {
     errorDiv.style.display = 'none';
     resultsInfo.innerHTML = '';
+    resultsBar.style.display = 'none';
+    paginationDiv.style.display = 'none';
+    dbCount.textContent = '131.000+';
     resultsDiv.innerHTML = `
         <div class="empty-state">
             <div class="icon">🚗</div>
             <h3>Zoek een keuringsstation</h3>
-            <p>Typ een postcode of plaatsnaam om keuringsstations te vinden</p>
+            <p>Typ een postcode of plaatsnaam, of selecteer een regio</p>
             <div class="examples">
                 <button class="example-btn" data-q="75001">Paris (75001)</button>
                 <button class="example-btn" data-q="69001">Lyon (69001)</button>
@@ -438,26 +628,50 @@ function esc(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-searchBtn.addEventListener('click', doSearch);
-searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(); });
+// Event Listeners
+searchBtn.addEventListener('click', () => doSearch(0));
+searchInput.addEventListener('keypress', e => { if (e.key === 'Enter') doSearch(0); });
+
+sortSelect.addEventListener('change', () => {
+    if (hasActiveFilters()) doSearch(0);
+});
+
 clearBtn.addEventListener('click', () => {
     searchInput.value = '';
+    regionSelect.value = '';
     vehiculeSelect.value = '';
     energieSelect.value = '';
     maxPriceSelect.value = '';
-    dbCount.textContent = '131.000+';
+    sortSelect.value = '';
     showEmpty();
+});
+
+// View toggle
+document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentView = btn.dataset.view;
+        const list = document.querySelector('.results-list');
+        if (list) {
+            list.classList.toggle('compact', currentView === 'compact');
+        }
+    });
 });
 
 function attachExampleListeners() {
     document.querySelectorAll('.example-btn').forEach(btn => {
         btn.onclick = () => {
             searchInput.value = btn.dataset.q;
-            doSearch();
+            doSearch(0);
         };
     });
 }
 
+// Make goToPage global
+window.goToPage = goToPage;
+
+// Init
 attachExampleListeners();
 </script>
 </body>
